@@ -55,13 +55,15 @@ const userSchema = new mongoose.Schema({
     Id: Number,
     quantity: Number,
   },
-});
+},);
 
 const itemsInCartSchema = new mongoose.Schema({
   pokemon: String,
   quantity: Number,
   user: String,
-})
+},{
+  collection: "itemsincart"
+});
 
 const cartSchema = new mongoose.Schema({
   cartitem: [{
@@ -70,11 +72,13 @@ const cartSchema = new mongoose.Schema({
     quantity: Number,
 }],
   username: String,
-})
+}, {
+  collection: "cart"
+});
 
 const cartModel = mongoose.model('cart', cartSchema);
 const itemsInCartModel = mongoose.model('itemsincart', itemsInCartSchema);
-const userModel = mongoose.model('user', userSchema); //Remember to make Schema on Mongo Compass / Atlas [If this is here. That means I have not done it yet.]
+const userModel = mongoose.model('users', userSchema); //Remember to make Schema on Mongo Compass / Atlas [If this is here. That means I have not done it yet.]
 const pokemonModel = mongoose.model('pokemon', pokemonSchema);
 const typeModel = mongoose.model('ability', abilitySchema);
 const timelinesModel = mongoose.model('timelines', timelinesSchema);
@@ -352,38 +356,50 @@ app.get("/register", function (req, res) {
   res.render("register");
 })
 
-function ifUserExists(user, response) {
-  userModel.find({
-    user: user
-  }, (error, data) => {
-    if(error){
-      console.log(error)
-    }
-    return response(data.length != 0);
-  })
-}
+// async function ifUserExists(user) {
+//   userModel.findOne({
+//     user: user
+//   }, (error, data) => {
+//     if(error){
+//       console.log(error);
+//     }
+//     console.log(data);
+//     if(data){
+//       console.log(true);
+//       return true;
+//     }
+//     console.log(false);
+//     return false;
+//   })
+// }
 
 app.post("/register", function (req, res) {
-  let ifUserExists;
-  ifUserExists(req.body.username, (res) => {
-    ifUserExists = res;
+  let UserExists;
+  UserExists = userModel.findOne({
+    user: req.body.username
+  }, (error, data) => {
+    if(error){
+      console.log(error);
+    }
+    console.log(data);
+    if(data){
+      res.send(true);
+    }
+    else {
+      userModel.create({
+        user: req.body.username,
+        password: req.body.password,
+        cart: {},
+      }, (error, data) => {
+        if(error) {
+          console.log(error);
+        }
+        // req.session.authenticated = true;
+        // req.session.username = data.user;
+        console.log(`HELLO ${data}`);
+        res.send(data.user);
+      })
+    }
   })
-  if(!ifUserExists) {
-    userModel.create({
-      user: req.body.username,
-      password: req.body.password,
-      cart: {},
-    }, (error, data) => {
-      if(error) {
-        console.log(error);
-      }
-      req.session.authenticated = true;
-      req.session.username = data.user;
-      res.send(data.name);
-    })
-  }
-  else {
-    res.send(true);
-  }
 })
 
