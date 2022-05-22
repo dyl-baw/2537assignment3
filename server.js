@@ -7,9 +7,13 @@ const mongoose = require("mongoose");
 // const http = require("http");
 const https = require("https");
 
-// app.use(session({
-//   secret: 'ssshhhhh'
-// }));
+app.use(session({
+  secret: 'ssshhhhh',
+  saveUninitialized: true,
+  resave: true
+}));
+
+app.use(express.json());
 
 pokeapiUrl = "http://localhost:3000/";
 
@@ -55,22 +59,22 @@ const userSchema = new mongoose.Schema({
     Id: Number,
     quantity: Number,
   },
-},);
+}, );
 
 const itemsInCartSchema = new mongoose.Schema({
   pokemon: String,
   quantity: Number,
   user: String,
-},{
+}, {
   collection: "itemsincart"
 });
 
 const cartSchema = new mongoose.Schema({
   cartitem: [{
-    _id:  String,
+    _id: String,
     pokemon: String,
     quantity: Number,
-}],
+  }],
   username: String,
 }, {
   collection: "cart"
@@ -323,12 +327,21 @@ app.get("/timeline/removeAll", function (req, res) {
 
 //------RENDERING MY EJS pages ----//
 
+app.post("/authentication", (req, res) => {
+  const {
+    username,
+    password
+  } = req.body;
+  res.send(req.body);
+})
+
+
 //show login form
-app.get("/login", function (req, res) {
+app.get("/login", (req, res) => {
   res.render("login");
 })
 
-app.post("/login", function (req, res) {
+app.post("/login", (req, res) => {
   let checkUser = req.body.username;
   let checkPassword = req.body.password;
 
@@ -340,7 +353,7 @@ app.post("/login", function (req, res) {
       console.log(err)
     }
 
-    if (data.length != 0) {
+    if (data.length !== 0) {
       req.session.authenticated = true;
       req.session.username = data[0].username;
 
@@ -352,50 +365,42 @@ app.post("/login", function (req, res) {
 })
 
 
-app.get("/register", function (req, res) {
+app.get("/register", (req, res) => {
   res.render("register");
 })
 
-// async function ifUserExists(user) {
-//   userModel.findOne({
-//     user: user
-//   }, (error, data) => {
-//     if(error){
-//       console.log(error);
-//     }
-//     console.log(data);
-//     if(data){
-//       console.log(true);
-//       return true;
-//     }
-//     console.log(false);
-//     return false;
-//   })
-// }
+function userExists(user, callback) {
+  userModel.find({
+    user: user
+  }, (err, data) => {
+    if (err) {
+      console.log(err)
+    }
+    return callback(data.length != 0);
+  })
+}
 
 app.post("/register", function (req, res) {
-  let UserExists;
-  UserExists = userModel.findOne({
+  userExists = userModel.findOne({
     user: req.body.username
   }, (error, data) => {
-    if(error){
+    if (error) {
       console.log(error);
     }
-    console.log(data);
-    if(data){
+    console.log(`check ${data}`);
+    if (data) {
       res.send(true);
-    }
-    else {
+    } else {
       userModel.create({
         user: req.body.username,
         password: req.body.password,
         cart: {},
       }, (error, data) => {
-        if(error) {
+        if (error) {
           console.log(error);
         }
-        // req.session.authenticated = true;
-        // req.session.username = data.user;
+        req.session.authenticated = true;
+        req.session.username = data.user;
         console.log(`HELLO ${data}`);
         res.send(data.user);
       })
@@ -403,3 +408,16 @@ app.post("/register", function (req, res) {
   })
 })
 
+app.get('/loggedin', (req, res) => {
+  if (req.session.authenticated) {
+    res.send(true)
+  } else {
+    res.redirect("/login.ejs")
+  }
+})
+
+app.get("/logout", (req, res) => {
+  req.session.authenticated = false;
+  req.session.username = undefined;
+  res.render("login.ejs");
+})
