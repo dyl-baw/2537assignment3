@@ -12,3 +12,11 @@ $(function() {
         })
     })
 });
+
+$.ajax({
+    type: 'get',
+    url: `http://localhost:3000/userAccount`,
+    success: function (data) {
+        $("#username").append(`${data.user}`)
+    }
+})

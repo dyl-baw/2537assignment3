@@ -55,7 +55,7 @@ const timelinesSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema({
   user: String,
   password: String,
-  cart:[],
+  cart: [],
 }, );
 
 const itemsInCartSchema = new mongoose.Schema({
@@ -88,9 +88,9 @@ const timelinesModel = mongoose.model('timelines', timelinesSchema);
 app.use(express.static("public"));
 
 app.use(bodyparser.urlencoded({
-   parameterLimit: 100000,
-   limit: '50mb',
-   extended: true
+  parameterLimit: 100000,
+  limit: '50mb',
+  extended: true
 }));
 
 const PORT = process.env.PORT || 3000;
@@ -332,6 +332,12 @@ app.post("/authentication", (req, res) => {
   res.send(req.body);
 })
 
+app.get("/userAccount", (req, res) => {
+  res.render("userAccount", {
+    "username": req.session.username,
+  })
+})
+
 
 //show login form
 app.get("/login", (req, res) => {
@@ -347,13 +353,12 @@ app.post("/login", (req, res) => {
       throw err;
     }
     console.log(`login data ${data}`);
-    if (data.length>0) {
+    if (data.length > 0) {
       req.session.authenticated = true;
       req.session.username = req.body.username;
       console.log(`req username ${req.body.username}`);
       console.log(`session name ${req.session.username}`);
-
-      res.render("./userAccount.ejs")
+      res.redirect("./userAccount")
     } else {
       res.render("./login");
     }
@@ -426,25 +431,26 @@ app.get("/logout", (req, res) => {
 //-----------CART FUNCTIONALITY --------//
 
 app.get("/cart"), (req, res) => {
-  if(req.session.authenticated) {
+  if (req.session.authenticated) {
     userModel.updateOne({
-      user: req.session.user,
-      pass: req.session.pass
-  }, {
-      $push: {
+        user: req.session.user,
+        pass: req.session.pass
+      }, {
+        $push: {
           cart: {
-              id: req.params.id,
-              cost: 200,
-              count: 1
+            id: req.params.id,
+            cost: 200,
+            count: 1
           }
-      }
-  },
-  function (error, data) {
-    if (error) {
-      console.log("Error " + error);
-    } else {
-      console.log("Data " + data);
-    }
-    res.send("Successful insert of cart!");
-  });}
+        }
+      },
+      function (error, data) {
+        if (error) {
+          console.log("Error " + error);
+        } else {
+          console.log("Data " + data);
+        }
+        res.send("Successful insert of cart!");
+      });
+  }
 }
