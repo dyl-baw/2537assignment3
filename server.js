@@ -366,6 +366,7 @@ app.post("/login", (req, res) => {
     if (result) {
       req.session.authenticated = true;
       req.session.username = req.body.username;
+      req.session.cart = [];
       console.log(`req username ${req.body.username}`);
       console.log(`session name ${req.session.username}`);
       res.redirect("./userAccount")
@@ -445,16 +446,22 @@ app.get("/logout", (req, res) => {
 
 //-----------CART FUNCTIONALITY --------//
 
-app.get("/cart"), (req, res) => {
+app.get("/cart/insert/:id", (req, res) => {
+  console.log('i am here');
   if (req.session.authenticated) {
+    data = {"id": req.params.id, "cost": 1, "count": 1};
+    var cart = req.session.cart;
+    cart.push(data);
+    req.session.cart = cart;
+    console.log(req.session.cart);
+    /*
     userModel.updateOne({
-        user: req.session.user,
-        pass: req.session.pass
+        user: req.session.user
       }, {
         $push: {
-          cart: {
+          "cart": {
             id: req.params.id,
-            cost: 200,
+            cost: 1,
             count: 1
           }
         }
@@ -465,7 +472,9 @@ app.get("/cart"), (req, res) => {
         } else {
           console.log("Data " + data);
         }
-        res.send("Successful insert of cart!");
-      });
+        res.send("Successfully inserted into the cart!");
+      });*/
+  } else {
+    res.send(null);
   }
-}
+});

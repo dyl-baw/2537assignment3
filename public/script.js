@@ -24,7 +24,7 @@ function processPokeResp(pokemon) {
     const pokemon_types = pokemon.types.map(type => type.type.name);
     const type = main_types.find(type => pokemon_types.indexOf(type) > -1);
     const colour = cardColors[type];
-    add_poke += `<div class="pokemon_container" style = "background-color : ${colour}" onclick="checkProfile('${pokemon.name}')"><a href="/profile/${pokemon.id}"><img src="${pokemon.sprites.other["official-artwork"].front_default}"> <div> </a>${upperCaseName} </div> <button> Add to Cart </button> </div>`
+    add_poke += `<div class="pokemon_container" style = "background-color : ${colour}" onclick="checkProfile('${pokemon.name}')"><a href="/profile/${pokemon.id}"><img src="${pokemon.sprites.other["official-artwork"].front_default}"> <div> </a>${upperCaseName} </div> <button id= "${pokemon.id}" class = "cart"> Add to Cart </button> </div>`
     // $(".pokemon_container").css("background-color", red);
     // pokemon_container.style.backgroundColor = color;
 }
@@ -52,9 +52,27 @@ async function ninePokemons() {
     jQuery("main").html(add_poke);
 }
 
+function addtocart() {
+    x = this.id;
+    console.log(x);
+    console.log(`http://localhost:3000/cart/insert/${x}`);
+    $.ajax({
+        url: `http://localhost:3000/cart/insert/${x}`,
+        type: "get",
+        success: function (a) {
+            if(a) {
+                window.alert(`Id: ${x} card was added to your cart`);
+            } else {
+                window.alert(`Please login before add to cart`);
+            }
+        }
+    })
+}
+
 
 function setup() {
     ninePokemons();
+    $("body").on("click", ".cart", addtocart);
 }
 
 
