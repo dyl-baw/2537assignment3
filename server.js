@@ -55,10 +55,7 @@ const timelinesSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema({
   user: String,
   password: String,
-  cart: {
-    Id: Number,
-    quantity: Number,
-  },
+  cart:[],
 }, );
 
 const itemsInCartSchema = new mongoose.Schema({
@@ -91,9 +88,9 @@ const timelinesModel = mongoose.model('timelines', timelinesSchema);
 app.use(express.static("public"));
 
 app.use(bodyparser.urlencoded({
-  parameterLimit: 100000,
-  limit: '50mb',
-  extended: true
+   parameterLimit: 100000,
+   limit: '50mb',
+   extended: true
 }));
 
 const PORT = process.env.PORT || 3000;
@@ -357,9 +354,9 @@ app.post("/login", (req, res) => {
       req.session.authenticated = true;
       req.session.username = data[0].username;
 
-      res.send(true);
+      res.render("./userAccount.ejs")
     } else {
-      res.send(false);
+      res.send("./login");
     }
   })
 })
@@ -369,40 +366,45 @@ app.get("/register", (req, res) => {
   res.render("register");
 })
 
-function userExists(user, callback) {
-  userModel.find({
-    user: user
-  }, (err, data) => {
-    if (err) {
-      console.log(err)
-    }
-    return callback(data.length != 0);
-  })
-}
+// function userExists(user, callback) {
+//   userModel.find({
+//     user: user
+//   }, (err, data) => {
+//     if (err) {
+//       console.log(err)
+//     }
+//     return callback(data.length != 0);
+//   })
+// }
 
-app.post("/register", function (req, res) {
-  userExists = userModel.findOne({
+app.get("/profile", (req, res) => {
+  res.render("logged in");
+})
+
+app.post("/register", (req, res) => {
+  console.log(req.body.username);
+  userModel.findOne({
     user: req.body.username
   }, (error, data) => {
     if (error) {
-      console.log(error);
+      throw error;
     }
-    console.log(`check ${data}`);
+    console.log(data);
     if (data) {
-      res.send(true);
+      //res.redirect("/register");
+      return res.send(false);
     } else {
       userModel.create({
         user: req.body.username,
         password: req.body.password,
-        cart: {},
       }, (error, data) => {
         if (error) {
           console.log(error);
         }
         req.session.authenticated = true;
         req.session.username = data.user;
-        console.log(`HELLO ${data}`);
-        res.send(data.user);
+        return res.send(true);
+        //res.redirect("/profile");
       })
     }
   })
@@ -410,7 +412,7 @@ app.post("/register", function (req, res) {
 
 app.get('/loggedin', (req, res) => {
   if (req.session.authenticated) {
-    res.send(true)
+    res.redirect("/userAccount")
   } else {
     res.redirect("/login.ejs")
   }
@@ -418,6 +420,29 @@ app.get('/loggedin', (req, res) => {
 
 app.get("/logout", (req, res) => {
   req.session.authenticated = false;
-  req.session.username = undefined;
-  res.render("login.ejs");
+  res.send("You have logged out");
 })
+
+app.get("/cart"), (req, res) => {
+  if(req.session.authenticated) {
+    userModel.updateOne({
+      user: req.session.user,
+      pass: req.session.pass
+  }, {
+      $push: {
+          cart: {
+              id: req.params.id,
+              cost: 200,
+              count: 1
+          }
+      }
+  },
+  function (error, data) {
+    if (error) {
+      console.log("Error " + error);
+    } else {
+      console.log("Data " + data);
+    }
+    res.send("Successful insert of cart!");
+  });}
+}
