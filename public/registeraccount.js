@@ -43,7 +43,7 @@ function savetoDataBase() {
         },
         success: function (data, text) {
             window.alert(data);
-            window.location.href = 'http://localhost:3000/login'
+            window.location.href = '/login'
         },
         error: function (request, status, error) {
             window.alert(status);

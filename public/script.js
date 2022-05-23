@@ -55,9 +55,9 @@ async function ninePokemons() {
 function addtocart() {
     x = this.id;
     console.log(x);
-    console.log(`http://localhost:3000/cart/insert/${x}`);
+    console.log(`/cart/insert/${x}`);
     $.ajax({
-        url: `http://localhost:3000/cart/insert/${x}`,
+        url: `/cart/insert/${x}`,
         type: "get",
         success: function (a) {
             if(a) {
