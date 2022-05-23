@@ -6,6 +6,7 @@ const bodyparser = require("body-parser");
 const mongoose = require("mongoose");
 // const http = require("http");
 const https = require("https");
+const bcrypt = require("bcrypt");
 
 app.use(session({
   secret: 'ssshhhhh',
@@ -62,7 +63,7 @@ const itemsInCartSchema = new mongoose.Schema({
   pokemon: String,
   quantity: Number,
   user: String,
-}, {
+}, { 
   collection: "itemsincart"
 });
 
@@ -104,12 +105,12 @@ app.get("/", (req, res) => {
 
 // password entry
 
-app.get("/", (req, res) => {
-  res.render("login", {
-    username: "",
-    password: "",
-  })
-})
+// app.get("/", (req, res) => {
+//   res.render("login", {
+//     username: "",
+//     password: "",
+//   })
+// })
 
 // app.get("/pokemon/:name", (req, res) => {
 //   let queryObject = isNaN(req.params.name) ? {
@@ -338,22 +339,31 @@ app.get("/userAccount", (req, res) => {
   })
 })
 
+app.get("/shoppingcart", (req, res) => {
+
+  if (req.session.authenticated) {
+    res.render("shoppingcart") 
+  } else {
+    return res.send("Log in before trying to access your cart!");
+  }
+})
 
 //show login form
 app.get("/login", (req, res) => {
   res.render("login");
 })
 
+
 app.post("/login", (req, res) => {
-  userModel.find({
+  userModel.findOne({
     user: req.body.username,
-    password: req.body.password
   }, (err, data) => {
     if (err) {
       throw err;
     }
     console.log(`login data ${data}`);
-    if (data.length > 0) {
+    const result = bcrypt.compareSync(req.body.password, data.password); //unhasing the password
+    if (result) {
       req.session.authenticated = true;
       req.session.username = req.body.username;
       console.log(`req username ${req.body.username}`);
@@ -388,6 +398,7 @@ app.get("/profile", (req, res) => {
 app.post("/register", (req, res) => {
   // console.log(req.body);
   // console.log(req.body.user);
+ 
   userModel.findOne({
     user: req.body.user
   }, (error, data) => {
@@ -399,9 +410,13 @@ app.post("/register", (req, res) => {
       //res.redirect("/register");
       return res.send("Username already taken. Try a different user");
     } else {
+      //const salt = await bcrypt.genSalt(10); //Hashing the password
+      //const password = await bcrypt.hash(req.body.password, salt);
+      const salt = bcrypt.genSaltSync(10);
+      let password = bcrypt.hashSync(req.body.password, salt);
       userModel.create({
-        user: req.body.user,
-        password: req.body.password,
+       user: req.body.user,
+        password: password,
       }, (error, data) => {
         if (error) {
           throw error;
