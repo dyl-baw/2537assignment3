@@ -339,24 +339,23 @@ app.get("/login", (req, res) => {
 })
 
 app.post("/login", (req, res) => {
-  let checkUser = req.body.username;
-  let checkPassword = req.body.password;
-
   userModel.find({
-    user: checkUser,
-    password: checkPassword
+    user: req.body.username,
+    password: req.body.password
   }, (err, data) => {
     if (err) {
-      console.log(err)
+      throw err;
     }
-
-    if (data.length !== 0) {
+    console.log(`login data ${data}`);
+    if (data.length>0) {
       req.session.authenticated = true;
-      req.session.username = data[0].username;
+      req.session.username = req.body.username;
+      console.log(`req username ${req.body.username}`);
+      console.log(`session name ${req.session.username}`);
 
       res.render("./userAccount.ejs")
     } else {
-      res.send("./login");
+      res.render("./login");
     }
   })
 })
@@ -382,28 +381,29 @@ app.get("/profile", (req, res) => {
 })
 
 app.post("/register", (req, res) => {
-  console.log(req.body.username);
+  // console.log(req.body);
+  // console.log(req.body.user);
   userModel.findOne({
-    user: req.body.username
+    user: req.body.user
   }, (error, data) => {
     if (error) {
       throw error;
     }
-    console.log(data);
+    console.log(`found user ${data}`);
     if (data) {
       //res.redirect("/register");
-      return res.send(false);
+      return res.send("Username already taken. Try a different user");
     } else {
       userModel.create({
-        user: req.body.username,
+        user: req.body.user,
         password: req.body.password,
       }, (error, data) => {
         if (error) {
-          console.log(error);
+          throw error;
         }
         req.session.authenticated = true;
         req.session.username = data.user;
-        return res.send(true);
+        return res.send("Registration Success");
         //res.redirect("/profile");
       })
     }
@@ -422,6 +422,8 @@ app.get("/logout", (req, res) => {
   req.session.authenticated = false;
   res.send("You have logged out");
 })
+
+//-----------CART FUNCTIONALITY --------//
 
 app.get("/cart"), (req, res) => {
   if(req.session.authenticated) {
